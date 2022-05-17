@@ -1,4 +1,9 @@
 import webapp2
+import cgi
+
+def escape_html(s):
+    return cgi.escape(s, quote = True)
+  
 
 form = """
 <form method="post">
@@ -26,23 +31,40 @@ form = """
 </form>
 """
 
+months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+month_abbvs = dict((m[:3].lower(), m) for m in months)
+
 def valid_month(month):
-    return False
+    if month: 
+        short_month = month[:3].lower()
+        print(month_abbvs)
+        return month_abbvs.get(short_month)
+        
+    
 def valid_day(day):
-    return True
+    if day and day.isdigit():
+        day = int(day)
+        if day > 0 and day <= 31:
+            return day
 
 def valid_year(year):
-    return True
-  
-    
+    if year and year.isdigit():
+        year = int(year)
+        if year > 1900 and year < 2023:
+            return year
+
+   
 class MainPage(webapp2.RequestHandler):
     def write_form(self, error="", month="", day="", year=""):
         self.response.out.write(form % {"error": error, 
-        "month": month, 
-        "day":day, 
-        "year":year})
+        "month": escape_html(month), 
+        "day":escape_html(day), 
+        "year":escape_html(year)})
+
+
     def get(self):
         self.write_form()
+
     def post(self):
         user_month = self.request.get('month')
         user_day = self.request.get('day')
@@ -55,10 +77,13 @@ class MainPage(webapp2.RequestHandler):
         if not(month and day and year):
             self.write_form("Thats wrong", user_month, user_day, user_year)
         else:
-            self.response.out.write("Thanks! Thats valid")
+            self.redirect("/thanks")
         
+class ThanksHandler(webapp2.RequestHandler):
+    def get(self):
+        self.response.out.write("Thanks! Thats valid")
     
         
    
-app = webapp2.WSGIApplication([('/', MainPage)], debug=True)      
+app = webapp2.WSGIApplication([('/', MainPage), ('/thanks', ThanksHandler)], debug=True)      
      
