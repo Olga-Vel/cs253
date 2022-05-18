@@ -1,19 +1,23 @@
 import sqlite3
-con = sqlite3.connect(':memory:')
-cur = con.cursor()
+from collections import namedtuple
 
-# Create table
-cur.execute('''CREATE TABLE stocks
-               (date text, trans text, symbol text, qty real, price real)''')
+Link = namedtuple('Link', ['id', 'submitter_id', 'submitted_time', 'votes', 'title', 'url'])
 
-# Insert a row of data
-cur.execute("INSERT INTO stocks VALUES ('2006-01-05','BUY','RHAT',100,35.14)")
+links = [
+    Link(0, 60398, 1334014208.0, 109, "C overtakes Java", "http://malarkey"),
+    Link(1, 60254, 1334014208.0, 891, "This explains", "http://flabergasted"),
+    Link(2, 62945, 1334014208.0, 341, "Lean Haskell", "http://shenanigan"),
+]
 
-# Save (commit) the changes
-con.commit()
+db = sqlite3.connect(':memory:')
+db.execute('create table links (id integer, submitter_id integer, submitted_time integer, votes integer, title text, url text)')
+for l in links:
+    db.execute('insert into links values (?, ?, ?, ?, ?, ?)', l)
 
-for row in cur.execute('SELECT * FROM stocks ORDER BY price'):
-        print(row)
-# We can also close the connection if we are done with it.
-# Just be sure any changes have been committed or they will be lost.
-con.close()
+def query():
+    c = db.execute("select * from links where id=2")
+    link = Link(*c.fetchone())    
+    return link.votes
+
+print (query())
+
